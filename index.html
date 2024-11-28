@@ -16,12 +16,9 @@
             align-items: center;
         }
         #reader {
-            width: 400px; /* Largura do leitor */
-            height: 400px; /* Altura do leitor */
-            border: 2px solid #000; /* Borda para visualização */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 400px; /* Tamanho fixo */
+            height: 400px; /* Tamanho fixo */
+            border: 2px solid #000; /* Opcional: borda para visualização */
         }
         #result {
             position: absolute;
@@ -44,39 +41,42 @@
 
     <script>
         const reader = new Html5Qrcode("reader");
+        let isSiteOpened = false; // Variável de controle
 
         // Inicia o leitor QR Code
         reader.start(
             { facingMode: "user" }, // Câmera frontal
             {
                 fps: 10, // Frames por segundo
-                qrbox: { width: 400, height: 400 } // Tamanho da caixa de leitura
+                qrbox: { width: 400, height: 400 } // Tamanho da caixa de leitura (ajustado para 400x400)
             },
             (decodedText) => {
-                // Abre o URL decodificado em uma nova aba
-                window.open(decodedText, '_blank');
+                if (!isSiteOpened) { // Verifica se o site já foi aberto
+                    isSiteOpened = true; // Marca como aberto
 
-                // Requisição ao servidor
-                fetch('/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ qr_data: decodedText })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Exibe a mensagem de confirmação
-                    const resultElement = document.getElementById("result");
-                    resultElement.innerText = data.message;
+                    // Requisição ao servidor
+                    fetch('/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ qr_data: decodedText })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Exibe a mensagem de confirmação
+                        const resultElement = document.getElementById("result");
+                        resultElement.innerText = data.message;
 
-                    // Toca o som de sucesso
-                    const successSound = document.getElementById("success-sound");
-                    successSound.play();
+                        // Toca o som de sucesso
+                        const successSound = document.getElementById("success-sound");
+                        successSound.play();
 
-                    // Limpa a mensagem após 3 segundos
-                    setTimeout(() => {
-                        resultElement.innerText = "";
-                    }, 3000);
-                });
+                        // Limpa a mensagem após 3 segundos
+                        setTimeout(() => {
+                            resultElement.innerText = "";
+                            isSiteOpened = false; // Permite abrir o site novamente após 3 segundos
+                        }, 3000);
+                    });
+                }
             },
             (errorMessage) => {
                 console.error(errorMessage); // Mensagens de erro no console
