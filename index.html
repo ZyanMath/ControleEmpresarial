@@ -37,26 +37,24 @@
 
     <script>
         const reader = new Html5Qrcode("reader");
+        let lastOpenedUrl = ""; // Variável para controlar a última URL aberta
 
         // Inicia o leitor QR Code
         reader.start(
             { facingMode: "user" }, // Câmera frontal
             {
                 fps: 10, // Frames por segundo
-                qrbox: { width: 400, height: 400 } // Tamanho da caixa de leitura (ajustado para 400x400)
+                qrbox: { width: 400, height: 400 } // Tamanho da caixa de leitura
             },
             (decodedText) => {
-                // Requisição ao servidor
-                fetch('/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ qr_data: decodedText })
-                })
-                .then(response => response.json())
-                .then(data => {
+                // Verifica se a URL já foi aberta
+                if (decodedText !== lastOpenedUrl) {
+                    lastOpenedUrl = decodedText; // Atualiza a última URL aberta
+                    window.open(decodedText, "_self"); // Abre a URL no mesmo guia
+
                     // Exibe a mensagem de confirmação
                     const resultElement = document.getElementById("result");
-                    resultElement.innerText = data.message;
+                    resultElement.innerText = "Abrindo: " + decodedText;
 
                     // Toca o som de sucesso
                     const successSound = document.getElementById("success-sound");
@@ -66,7 +64,7 @@
                     setTimeout(() => {
                         resultElement.innerText = "";
                     }, 3000);
-                });
+                }
             },
             (errorMessage) => {
                 console.error(errorMessage); // Mensagens de erro no console
