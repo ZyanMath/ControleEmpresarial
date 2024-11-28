@@ -5,9 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Refeitório</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #reader {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
-    <div id="reader" style="width:300px;"></div>
+    <div id="reader"></div>
     <p id="result" style="font-size: 1.5em; color: green; font-weight: bold;"></p>
 
     <!-- Adicionando o som -->
