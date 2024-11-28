@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Refeitório</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <h1>Controle de Refeitório</h1>
+    <div id="reader" style="width:300px;"></div>
+    <p id="result" style="font-size: 1.5em; color: green; font-weight: bold;"></p>
+
+    <!-- Adicionando o som -->
+    <audio id="success-sound" src="success.mp3" preload="auto"></audio>
+
+    <script>
+        const reader = new Html5Qrcode("reader");
+
+        // Inicia o leitor QR Code
+        reader.start(
+            { facingMode: "user" }, // Câmera frontal
+            {
+                fps: 10, // Frames por segundo
+                qrbox: 250 // Tamanho da caixa de leitura
+            },
+            (decodedText) => {
+                // Requisição ao servidor
+                fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qr_data: decodedText })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Exibe a mensagem de confirmação
+                    const resultElement = document.getElementById("result");
+                    resultElement.innerText = data.message;
+
+                    // Toca o som de sucesso
+                    const successSound = document.getElementById("success-sound");
+                    successSound.play();
+
+                    // Limpa a mensagem após 3 segundos
+                    setTimeout(() => {
+                        resultElement.innerText = "";
+                    }, 3000);
+                });
+            },
+            (errorMessage) => {
+                console.error(errorMessage); // Mensagens de erro no console
+            }
+        );
+    </script>
+</body>
+</html>
