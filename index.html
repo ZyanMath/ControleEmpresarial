@@ -24,7 +24,7 @@
             font-size: 1.5em;
             color: green;
             font-weight: bold;
-            z-index: 10; /* Para garantir que o texto fique acima do leitor */
+            z-index: 10;
         }
     </style>
 </head>
@@ -37,34 +37,50 @@
 
     <script>
         const reader = new Html5Qrcode("reader");
-        let lastOpenedUrl = ""; // Variável para controlar a última URL aberta
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbxpqgeJTY8DoCagvrDIYnZpUtUqczlZrbgnx8PjgJwtHmppXj1nY0sAKJcJeegKyv1PHQ/exec";
 
         // Inicia o leitor QR Code
         reader.start(
-            { facingMode: "user" }, // Câmera frontal
+            { facingMode: "environment" }, // Câmera traseira
             {
                 fps: 10, // Frames por segundo
                 qrbox: { width: 400, height: 400 } // Tamanho da caixa de leitura
             },
-            (decodedText) => {
-                // Verifica se a URL já foi aberta
-                if (decodedText !== lastOpenedUrl) {
-                    lastOpenedUrl = decodedText; // Atualiza a última URL aberta
-                    window.open(decodedText, "_self"); // Abre a URL no mesmo guia
+            async (decodedText) => {
+                // Exibe a mensagem de confirmação
+                const resultElement = document.getElementById("result");
+                resultElement.innerText = "Lendo: " + decodedText;
 
-                    // Exibe a mensagem de confirmação
-                    const resultElement = document.getElementById("result");
-                    resultElement.innerText = "Abrindo: " + decodedText;
+                // Toca o som de sucesso
+                const successSound = document.getElementById("success-sound");
+                successSound.play();
 
-                    // Toca o som de sucesso
-                    const successSound = document.getElementById("success-sound");
-                    successSound.play();
+                // Envia os dados para o AppsScript
+                try {
+                    const data = { id: decodedText.split(",")[0], name: decodedText.split(",")[1] }; // Ajuste conforme o padrão do QR code
+                    const response = await fetch(scriptUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(data),
+                    });
 
-                    // Limpa a mensagem após 3 segundos
-                    setTimeout(() => {
-                        resultElement.innerText = "";
-                    }, 3000);
+                    if (response.ok) {
+                        const jsonResponse = await response.json();
+                        resultElement.innerText = jsonResponse.message;
+                    } else {
+                        resultElement.innerText = "Erro ao salvar os dados.";
+                    }
+                } catch (error) {
+                    console.error("Erro na requisição:", error);
+                    resultElement.innerText = "Erro ao comunicar com o servidor.";
                 }
+
+                // Limpa a mensagem após 3 segundos
+                setTimeout(() => {
+                    resultElement.innerText = "";
+                }, 3000);
             },
             (errorMessage) => {
                 console.error(errorMessage); // Mensagens de erro no console
