@@ -24,7 +24,7 @@
             font-size: 1.5em;
             color: green;
             font-weight: bold;
-            z-index: 10;
+            z-index: 10; /* Para garantir que o texto fique acima do leitor */
         }
     </style>
 </head>
@@ -37,50 +37,34 @@
 
     <script>
         const reader = new Html5Qrcode("reader");
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbxpqgeJTY8DoCagvrDIYnZpUtUqczlZrbgnx8PjgJwtHmppXj1nY0sAKJcJeegKyv1PHQ/exec";
+        let lastOpenedUrl = ""; // Variável para controlar a última URL aberta
 
         // Inicia o leitor QR Code
         reader.start(
-            { facingMode: "environment" }, // Câmera traseira
+            { facingMode: "user" }, // Câmera frontal
             {
                 fps: 10, // Frames por segundo
                 qrbox: { width: 400, height: 400 } // Tamanho da caixa de leitura
             },
-            async (decodedText) => {
-                // Exibe a mensagem de confirmação
-                const resultElement = document.getElementById("result");
-                resultElement.innerText = "Lendo: " + decodedText;
+            (decodedText) => {
+                // Verifica se a URL já foi aberta
+                if (decodedText !== lastOpenedUrl) {
+                    lastOpenedUrl = decodedText; // Atualiza a última URL aberta
+                    window.open(decodedText, "_self"); // Abre a URL no mesmo guia
 
-                // Toca o som de sucesso
-                const successSound = document.getElementById("success-sound");
-                successSound.play();
+                    // Exibe a mensagem de confirmação
+                    const resultElement = document.getElementById("result");
+                    resultElement.innerText = "Abrindo: " + decodedText;
 
-                // Envia os dados para o AppsScript
-                try {
-                    const data = { id: decodedText.split(",")[0], name: decodedText.split(",")[1] }; // Ajuste conforme o padrão do QR code
-                    const response = await fetch(scriptUrl, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(data),
-                    });
+                    // Toca o som de sucesso
+                    const successSound = document.getElementById("success-sound");
+                    successSound.play();
 
-                    if (response.ok) {
-                        const jsonResponse = await response.json();
-                        resultElement.innerText = jsonResponse.message;
-                    } else {
-                        resultElement.innerText = "Erro ao salvar os dados.";
-                    }
-                } catch (error) {
-                    console.error("Erro na requisição:", error);
-                    resultElement.innerText = "Erro ao comunicar com o servidor.";
+                    // Limpa a mensagem após 3 segundos
+                    setTimeout(() => {
+                        resultElement.innerText = "";
+                    }, 3000);
                 }
-
-                // Limpa a mensagem após 3 segundos
-                setTimeout(() => {
-                    resultElement.innerText = "";
-                }, 3000);
             },
             (errorMessage) => {
                 console.error(errorMessage); // Mensagens de erro no console
